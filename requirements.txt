@@ -1,0 +1,10 @@
+xmltodict
+fastapi
+uvicorn
+starlette_exporter
+pyasn1
+pyasn1_modules
+requests
+fastapi_utils
+mysql-connector-python
+oracledb
