@@ -1,6 +1,6 @@
 echo START
 cd docker
-docker-compose down
+docker-compose down # --remove-orphans
 cd ..
 docker rmi ssr-api
 docker build . -t ssr-api -f docker/Dockerfile #--no-cache
