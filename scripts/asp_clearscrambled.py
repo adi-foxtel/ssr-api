@@ -64,7 +64,6 @@ def SSR_get_details(streamId):
     res["data"] = a
     conn.close()
 
-    #print(qry)
     print(json.dumps(a, indent=4))
 
     return(res)
@@ -111,7 +110,6 @@ def SSR_get_streams():
 
     conn.close()
 
-    #print(qry)
     print(json.dumps(a, indent=4))
     return(res)
 
@@ -136,7 +134,10 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
         'gettservicedetail': getSsrServiceDetailByTsId_sql_query,
         'gettsstreams': getSsrScrambledTransportStream_sql_query,
         'CLEAR': CLRcommand_sql_query,
-        'SCRAMBLED': SCRcommand_sql_query
+        'SCRAMBLED': SCRcommand_sql_query,
+        'CLEAR_ARRAY': CLRcommand_sql_query,
+        'SCRAMBLED_ARRAY': SCRcommand_sql_query
+
     }
 
     qry = choices.get(command, 'default')
@@ -145,10 +146,6 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
     res = {}
 
     try:
-
-        if type(streamId) != NoneType :
-            streamId = int(streamId)
-            qry = qry.replace("?", str(streamId))
 
         if PLATFORM == "DEV" :
             qry = qry.upper()
@@ -163,30 +160,39 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
         # Creating a cursor object to traverse the resultset
         cur = conn.cursor()
 
-        if type(state) == NoneType :
+        if type(state) != NoneType :
 
-            print("mySql GET request")
-            cur.execute(qry)
+            if command == "SCRAMBLED_ARRAY" :
+                for x in streamId:
+                    print("\n*** Switch to Default START\n")
+                    qry = SCRcommand_sql_query
 
-            for row in cur:
-                o = {}
-                if command == "gettsstreams" :
-                    o["out_stream_id"] = row[0]
-                    o["total"] = row[1]
-                    o["defaults"] = row[2]
-                    o["altered"] = row[3]
-                    o["clear"] = row[4]
-                else:
-                    o["source_chan_id"] = row[0]
-                    o["total"] = row[1]
-                    o["defaults"] = row[2]
-                    o["clear"] = row[3]
-                    o["name"] = row[4]
-                a.append(o)
+                    if(PLATFORM == "DEV") :
+                        qry = qry.upper()
+                        qry = qry.replace("SUBSTR(NOTES,INSTR(NOTES,'(')+1,(INSTR(NOTES,')')-INSTR(NOTES,'(')-1))","NULLIF(SUBSTR(NOTES,INSTR(NOTES,'(')+1,(INSTR(NOTES,')')-INSTR(NOTES,'(')-1)),'')")
+                        qry = qry.replace("DEFAULT", "Default")
 
-        else :
+                    qry = qry.replace("?", str(x))
+                    print(qry)
+                    cur.execute(qry)
+                    conn.commit()
+                    print("\n*** Switch to Default END\n")
 
-            if command == "SCRAMBLED" :
+            elif command == "CLEAR_ARRAY" :
+                for x in streamId:
+                    print("\n*** Switch to CLEAR\n")
+                    qry = CLRcommand_sql_query
+
+                    if(PLATFORM == "DEV") :
+                        qry = qry.upper()
+
+                    qry = qry.replace("?", str(x))
+                    print(qry)
+                    cur.execute(qry)
+                    conn.commit()
+                    print("\n***Switch to CLEAR END\n")
+
+            elif command == "SCRAMBLED" :
 
                 print("\n*** Switch to Default START\n")
                 qry = SCRcommand_sql_query
@@ -202,6 +208,7 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
                 print("\n*** Switch to Default END\n")
 
             elif command == "CLEAR" :
+
                 print("\n*** Switch to CLEAR\n")
                 qry = CLRcommand_sql_query
 
