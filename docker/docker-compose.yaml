@@ -6,7 +6,6 @@ services:
     expose:
       - "9001"
       - "3306"
-      - "1521"
     ports:
       - "9001:9001"
 
@@ -23,13 +22,17 @@ services:
       USER: "casops"
       PASSWORD: "copsaretops"
 
+      NMX: "10.243.172.221"
+      NMX_USER: "Administrator"
+      NMX_PASS: "harmonic"      
+
 #      PLATFORM: "PROD"
 #      LOG_LEVEL: 10
-#      HOST: "10.14.64.109"
+#      HOST: "10.233.162.135"
 #      PORT: 1521
-#      DATABASE: "SSR"
+#      DATABASE: "SSRSTBY"
 #      USER: "system"
-#      PASSWORD: "up580ard"
+#      PASSWORD: "t3chn0l0gy"
 
 #      PLATFORM: "NPD"
 #      LOG_LEVEL: 10
