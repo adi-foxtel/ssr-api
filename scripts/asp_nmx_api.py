@@ -65,7 +65,6 @@ def nmx_get_devices():
 
             for i in data:
                 if 'HardwareCategory' in i['DeviceInfo']:
-                    print("HardwareCategory exists: " + i['DeviceInfo']['HardwareCategory'])
                     if i['DeviceInfo']['HardwareCategory'] == "Harmonic":
                         harmonics.append({"ID": i['DeviceInfo']['ID'], "Name": i['DeviceInfo']['Name']})
                 else:
@@ -80,6 +79,8 @@ def nmx_get_devices():
     return {"rezult": "error"}
 
 def nmx_patch_channel(id,status):
+
+    print("nmx_patch_channel")
 
     print(id)
     print(status)
@@ -126,6 +127,8 @@ def nmx_patch_channel(id,status):
 def nmx_get_service_plans_scrambling_lists():
     
     ret = nmx_get_devicesaccess_token()    
+    print("nmx_get_service_plans_scrambling_lists")
+
     if ret != 'error' :
         access_token = ret['rezult']['access_token']
         headers = {
@@ -153,9 +156,6 @@ def nmx_get_service_plans_scrambling_lists():
                         active = True
                 else:
                     continue
-
-            print("ID: " + ID)
-            print("Active: " + str(active))
 
             url = f"https://{obj.NMX}/api/Scrambling/v2/SCG?ServicePlanId={ID}"
 
@@ -187,8 +187,9 @@ def nmx_get_service_plans_scrambling_lists():
 
 def nmx_get_service_lists():
     
-    ret = nmx_get_devicesaccess_token()
-
+    ret = nmx_get_service_lists()
+    print("nmx_get_service_groups")
+    
     if ret != 'error' :
         
         access_token = ret['rezult']['access_token']
@@ -198,7 +199,6 @@ def nmx_get_service_lists():
         }
 
         ret = nmx_get_devices()
-        print(ret)
 
         if ret != 'error' :
             
@@ -206,10 +206,8 @@ def nmx_get_service_lists():
             
             for i in ret:
                 ID = i['ID']
-                print(ID)
 
                 url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
-                print(url)
                 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
                 session = requests.Session()
                 session.verify = False
@@ -220,9 +218,6 @@ def nmx_get_service_lists():
                     services=[]
 
                     if len(data) > 0 :
-
-                        print("SERVICES")
-                        print(len(data))
 
                         for s in data:
                             services.append(s)
@@ -243,7 +238,6 @@ def nmx_get_service_groups():
     
     ret = nmx_get_devicesaccess_token()
     print("nmx_get_service_groups")
-    myDict = {}
 
     if ret != 'error' :
         
@@ -254,21 +248,20 @@ def nmx_get_service_groups():
         }
 
         ret = nmx_get_devices()
-        print(ret)
 
         if ret != 'error' :
             
             ServiceGroups = []
             ServiceGroupsSorted = [
-                [],[],[],[],[],[],[],[],[],[],
-                [],[],[],[],[],[],[],[],[],[],
-                [],[],[],[],[],[],[],[],[],[],
-                [],[],[],[],[],[],[],[],[],[]
+                [] for a in range(100)
+            #    [],[],[],[],[],[],[],[],[],[],
+            #    [],[],[],[],[],[],[],[],[],[],
+            #    [],[],[],[],[],[],[],[],[],[],
+            #    [],[],[],[],[],[],[],[],[],[]
             ]
             
             for i in ret:
                 ID = i['ID']
-                print(ID)
 
                 url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
                 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -281,15 +274,11 @@ def nmx_get_service_groups():
 
                     if len(data) > 0 :
 
-                        print("GROUPS")
-                        print(len(data))
-
                         for s in data:
                             tag = str(s["ServiceNumber"])
                             if len(tag) > 3 :
                                 tag_service = tag[-3:]
                                 tag_group   = tag[:len(tag) - 3]
-                                #myDict[tag_group].append({"service": s})
                                 ServiceGroups.append({"group": int(tag_group), "service": s})
 
                 except Exception as e:
@@ -300,12 +289,9 @@ def nmx_get_service_groups():
 
         for i in ServiceGroups :
             for p in plan:
-
                 if p['Name'] == str(i['service']['ServiceNumber']) :
-                    print("FOUND"+ p['Name'])
-                    print(p['Status'])
                     i['service']['Status'] = p['Status']
-                    i['service']['ChannelId'] = p['ID']
+                    i['service']['ServiceId'] = p['ID']
 
 
             ServiceGroupsSorted[int(i['group'])].append(i['service'])
