@@ -254,10 +254,6 @@ def nmx_get_service_groups():
             ServiceGroups = []
             ServiceGroupsSorted = [
                 [] for a in range(100)
-            #    [],[],[],[],[],[],[],[],[],[],
-            #    [],[],[],[],[],[],[],[],[],[],
-            #    [],[],[],[],[],[],[],[],[],[],
-            #    [],[],[],[],[],[],[],[],[],[]
             ]
             
             for i in ret:
@@ -290,6 +286,11 @@ def nmx_get_service_groups():
         for i in ServiceGroups :
             for p in plan:
                 if p['Name'] == str(i['service']['ServiceNumber']) :
+                    tag = p['Name']
+                    tag_service = tag[-3:]
+                    tag_group   = tag[:len(tag) - 3]
+                    i['service']['Channel'] = int(tag_service)
+                    i['service']['Group'] = int(tag_group)
                     i['service']['Status'] = p['Status']
                     i['service']['ServiceId'] = p['ID']
 
