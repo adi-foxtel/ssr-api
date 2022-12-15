@@ -39,13 +39,13 @@ def nmx_get_devicesaccess_token():
 
     except Exception as e:
         print(e)
-        return {"rezult": "error"}
+        return {"rezult": "nmx_get_devicesaccess_token error"}
         
 def nmx_get_devices():
     
     ret = nmx_get_devicesaccess_token()
 
-    if ret != 'error' :
+    if not isinstance(ret['rezult'], str) :
 
         access_token = ret['rezult']['access_token']
         headers = {
@@ -71,13 +71,13 @@ def nmx_get_devices():
                 else:
                     continue
 
-            return harmonics
+            return {"rezult":harmonics}
 
         except Exception as e:
             print(e)
-            return {"rezult": "error"}
+            return {"rezult": "nmx_get_devices error"}
 
-    return {"rezult": "error"}
+    return {"rezult": "nmx_get_devicesaccess_token error"}
 
 def nmx_patch_channel(id,status):
 
@@ -88,7 +88,7 @@ def nmx_patch_channel(id,status):
     rezult={}
 
     ret = nmx_get_devicesaccess_token()
-    if ret != 'error' :
+    if not isinstance(ret['rezult'], str) :
 
         access_token = ret['rezult']['access_token']
         headers = {
@@ -111,16 +111,16 @@ def nmx_patch_channel(id,status):
             r = session.patch(url, json=body, headers=headers)
             data = json.loads(r.text)
 
-            rezult = data
+            rezult = {"rezult": data}
             print(rezult)
             return rezult
 
         except Exception as e:
             print(e)
-            return {"rezult": "patch error"}
+            return {"rezult": "nmx_patch_channel error"}
 
     
-    return {"rezult": "token error"}  
+    return {"rezult": "nmx_get_devicesaccess_token error"}  
 
 
 
@@ -130,7 +130,7 @@ def nmx_get_service_plans_scrambling_lists():
     ret = nmx_get_devicesaccess_token()    
     print("nmx_get_service_plans_scrambling_lists")
 
-    if ret != 'error' :
+    if not isinstance(ret['rezult'], str) :
         access_token = ret['rezult']['access_token']
         headers = {
             'Accept': "application/json",
@@ -168,20 +168,20 @@ def nmx_get_service_plans_scrambling_lists():
                 r = session.get( url, headers=headers)
 
                 data = json.loads(r.text)
-                scrambling = data
+                scrambling = {"rezult": data}
 
                 return scrambling
 
 
             except Exception as e:
                 print(e)
-                return {"rezult": "error"}
+                return {"rezult": "nmx_get_service_plans_scrambling_list error"}
 
         except Exception as e:
             print(e)
-            return {"rezult": "error"}
+            return {"rezult": "nmx_get_service_plans error"}
 
-    return {"rezult": "error"} 
+    return {"rezult": "nmx_get_devicesaccess_token error"} 
 
 
 
@@ -191,7 +191,7 @@ def nmx_get_service_lists():
     ret = nmx_get_devicesaccess_token()
     print("nmx_get_service_lists")
     
-    if ret != 'error' :
+    if not isinstance(ret['rezult'], str) :
         
         access_token = ret['rezult']['access_token']
         headers = {
@@ -201,11 +201,11 @@ def nmx_get_service_lists():
 
         ret = nmx_get_devices()
 
-        if ret != 'error' :
+        if not isinstance(ret['rezult'], str) :
             
             objectServices = []
             
-            for i in ret:
+            for i in ret['rezult']:
                 ID = i['ID']
 
                 url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
@@ -227,11 +227,11 @@ def nmx_get_service_lists():
 
                 except Exception as e:
                     print(e)
-                    return {"rezult": "error"}
+                    return {"rezult": "nmx_get_service_lists error"}
 
-        return(objectServices)
+        return({"rezult": objectServices})
 
-    return {"rezult": "error"} 
+    return {"rezult": "nmx_get_devicesaccess_token error"} 
 
 
 
@@ -240,7 +240,7 @@ def nmx_get_service_groups():
     ret = nmx_get_devicesaccess_token()
     print("nmx_get_service_groups")
 
-    if ret['rezult'] != 'error' :
+    if not isinstance(ret['rezult'], str) :
         
         access_token = ret['rezult']['access_token']
         headers = {
@@ -250,16 +250,16 @@ def nmx_get_service_groups():
 
         ret = nmx_get_devices()
 
-        if ret != 'error' :
+        if not isinstance(ret['rezult'], str) :
             
             ServiceGroups = []
             ServiceGroupsSorted = [
                 [] for a in range(100)
             ]
             
-            for i in ret:
-                ID = i['ID']
+            for i in ret['rezult']:
 
+                ID = i['ID']
                 url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
                 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
                 session = requests.Session()
@@ -280,32 +280,36 @@ def nmx_get_service_groups():
 
                 except Exception as e:
                     print(e)
-                    return {"rezult": "error"}
+                    return {"rezult": "nmx_get_service_list error"}
 
-        plan = nmx_get_service_plans_scrambling_lists()
+        ret = nmx_get_service_plans_scrambling_lists()
 
-        for i in ServiceGroups :
-            for p in plan:
-                if p['Name'] == str(i['service']['ServiceNumber']) :
-                    tag = p['Name']
-                    tag_service = tag[-3:]
-                    tag_group   = tag[:len(tag) - 3]
-                    i['service']['Channel'] = int(tag_service)
-                    i['service']['Group'] = int(tag_group)
-                    i['service']['Status'] = p['Status']
-                    i['service']['ServiceId'] = p['ID']
+        if not isinstance(ret['rezult'], str) :
+            
+            plan = ret['rezult']
 
-
-            ServiceGroupsSorted[int(i['group'])].append(i['service'])
-
-
-
+            for i in ServiceGroups :
+                for p in plan:
+                    if p['Name'] == str(i['service']['ServiceNumber']) :
+                        tag = p['Name']
+                        tag_service = tag[-3:]
+                        tag_group   = tag[:len(tag) - 3]
+                        i['service']['Channel'] = int(tag_service)
+                        i['service']['Group'] = int(tag_group)
+                        i['service']['Status'] = p['Status']
+                        i['service']['ServiceId'] = p['ID']
 
 
+                ServiceGroupsSorted[int(i['group'])].append(i['service'])
 
-        return(ServiceGroupsSorted)
 
-    return {"rezult": "error"} 
+
+
+
+
+            return({"rezult":ServiceGroupsSorted})
+
+    return {"rezult": "nmx_get_service_groups error"} 
 
 
 
