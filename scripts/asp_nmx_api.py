@@ -44,6 +44,7 @@ def nmx_get_devicesaccess_token():
 def nmx_get_devices():
     
     ret = nmx_get_devicesaccess_token()
+
     if ret != 'error' :
 
         access_token = ret['rezult']['access_token']
@@ -187,8 +188,8 @@ def nmx_get_service_plans_scrambling_lists():
 
 def nmx_get_service_lists():
     
-    ret = nmx_get_service_lists()
-    print("nmx_get_service_groups")
+    ret = nmx_get_devicesaccess_token()
+    print("nmx_get_service_lists")
     
     if ret != 'error' :
         
@@ -239,7 +240,7 @@ def nmx_get_service_groups():
     ret = nmx_get_devicesaccess_token()
     print("nmx_get_service_groups")
 
-    if ret != 'error' :
+    if ret['rezult'] != 'error' :
         
         access_token = ret['rezult']['access_token']
         headers = {
