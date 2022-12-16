@@ -282,6 +282,7 @@ def nmx_get_service_groups():
                     print(e)
                     return {"rezult": "nmx_get_service_list error"}
 
+
         ret = nmx_get_service_plans_scrambling_lists()
 
         if not isinstance(ret['rezult'], str) :
@@ -289,6 +290,9 @@ def nmx_get_service_groups():
             plan = ret['rezult']
 
             for i in ServiceGroups :
+
+                i.sort(key=sortByServiceNumber)
+
                 for p in plan:
                     if p['Name'] == str(i['service']['ServiceNumber']) :
 
@@ -307,7 +311,8 @@ def nmx_get_service_groups():
     return {"rezult": "nmx_get_service_groups error"} 
 
 
-
+def sortByServiceNumber(k):
+    return k['ServiceNumber']
 
 
 if __name__ == '__main__':
