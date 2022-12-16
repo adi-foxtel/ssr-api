@@ -291,6 +291,7 @@ def nmx_get_service_groups():
             for i in ServiceGroups :
                 for p in plan:
                     if p['Name'] == str(i['service']['ServiceNumber']) :
+
                         tag = p['Name']
                         tag_service = tag[-3:]
                         tag_group   = tag[:len(tag) - 3]
@@ -299,13 +300,7 @@ def nmx_get_service_groups():
                         i['service']['Status'] = p['Status']
                         i['service']['ServiceId'] = p['ID']
 
-
-                ServiceGroupsSorted[int(i['group'])].append(i['service'])
-
-
-
-
-
+                        ServiceGroupsSorted[int(i['group'])].append(i['service'])
 
             return({"rezult":ServiceGroupsSorted})
 
