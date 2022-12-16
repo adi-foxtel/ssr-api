@@ -285,13 +285,13 @@ def nmx_get_service_groups():
 
         ret = nmx_get_service_plans_scrambling_lists()
 
+        ServiceGroups.sort(key=sortByServiceNumber)
+
         if not isinstance(ret['rezult'], str) :
             
             plan = ret['rezult']
 
             for i in ServiceGroups :
-
-                i.sort(key=sortByServiceNumber)
 
                 for p in plan:
                     if p['Name'] == str(i['service']['ServiceNumber']) :
@@ -312,7 +312,7 @@ def nmx_get_service_groups():
 
 
 def sortByServiceNumber(k):
-    return k['ServiceNumber']
+    return k['service']['ServiceNumber']
 
 
 if __name__ == '__main__':
