@@ -84,6 +84,7 @@ def nmx_patch_channel(stream,id,status):
     print("nmx_patch_channel")
 
     print(id)
+    print(str(stream))
     print(status)
     rezult={}
 
