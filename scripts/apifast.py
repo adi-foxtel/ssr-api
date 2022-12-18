@@ -126,9 +126,8 @@ def get_nmx_scrambling_lists():
 @app.post("/platform/manage/picture/scrambled/nmx/setClearScramble")
 async def request_post(info : Request):
     req_info = await info.json()
-    response =  nmx_patch_channel(req_info["ID"], req_info["status"])
+    response =  nmx_patch_channel( req_info["Group"], req_info["ID"], req_info["status"])
     return JSONResponse(status_code=200, content=response)
-
 
 
 serverport = int(os.getenv('MYSQL_API_PORT', 9001))

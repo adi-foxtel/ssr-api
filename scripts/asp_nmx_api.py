@@ -79,7 +79,7 @@ def nmx_get_devices():
 
     return {"rezult": "nmx_get_devicesaccess_token error"}
 
-def nmx_patch_channel(id,status):
+def nmx_patch_channel(stream,id,status):
 
     print("nmx_patch_channel")
 
@@ -111,7 +111,7 @@ def nmx_patch_channel(id,status):
             r = session.patch(url, json=body, headers=headers)
             data = json.loads(r.text)
 
-            rezult = {"rezult": data}
+            rezult = {"rezult": data, "Group": stream }
             print(rezult)
             return rezult
 
