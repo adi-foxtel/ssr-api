@@ -40,6 +40,47 @@ getSsrServiceDetailByTsId_sql_query = "SELECT total.source_chan_id,\n"+\
     ") clear ON clear.source_chan_id = total.source_chan_id\n"+\
     "ORDER BY source_chan_id ASC"
 
+getNmxSsrServiceDetailByTsId_sql_query = "SELECT total.source_chan_id, si_service_id,\n"+\
+    "total.cnt as total,\n"+\
+    "NVL(DEFAULTS.cnt, 0) as DEFAULTS,\n"+\
+    "NVL(clear.cnt, 0) as clear,\n"+\
+    "service_name.name from (\n"+\
+    "    select source_chan_id, count(*) cnt\n"+\
+    "    from ssr.out_stream_comp\n"+\
+    "    where out_stream_id = ?\n"+\
+    "    group by source_chan_id\n"+\
+    ") total\n"+\
+    "LEFT OUTER JOIN (\n"+\
+    "    select source_chan_id, count(*) cnt\n"+\
+    "    from ssr.out_stream_comp\n"+\
+    "    where NVL(ecm_key_num,-1) = NVL(SUBSTR(notes,instr(notes,'(')+1, (instr(notes,')')-instr(notes,'(')-1)) ,-1)\n"+\
+    "    and source_chan_id in (\n"+\
+    "        select source_chan_id\n"+\
+    "        from ssr.out_stream\n"+\
+    "        where sig_id = 1\n"+\
+    "        and out_stream_id = ?\n"+\
+    "    )\n"+\
+    "    group by source_chan_id\n"+\
+    ") DEFAULTS ON DEFAULTS.source_chan_id = total.source_chan_id\n"+\
+    "LEFT OUTER JOIN (\n"+\
+    "    select out_stream_comp.source_chan_id,\n"+\
+    "    name,\n"+\
+    "    si_service.si_service_id\n"+\
+    "    from ssr.out_stream_comp, ssr.si_service_name, ssr.si_service_comp, ssr.si_service\n"+\
+    "    where out_stream_comp.source_chan_id = si_service_name.si_service_key\n"+\
+    "    and out_stream_comp.source_chan_id = si_service_comp.source_chan_id\n"+\
+    "    and si_service.si_service_key = si_service_comp.si_service_key\n"+\
+    "    and si_service_name.lang = 'eng'\n"+\
+    "    group by out_stream_comp.source_chan_id, name, si_service.si_service_id\n"+\
+    ") SERVICE_NAME ON service_name.source_chan_id = total.source_chan_id\n"+\
+    "LEFT OUTER JOIN (\n"+\
+    "    select source_chan_id, count(*) cnt\n"+\
+    "    from ssr.out_stream_comp\n"+\
+    "    where ecm_stream_num = 0\n"+\
+    "    and out_stream_id = ?\n"+\
+    "    group by source_chan_id\n"+\
+    ") clear ON clear.source_chan_id = total.source_chan_id\n"+\
+    "ORDER BY source_chan_id ASC"
 
 
 getSsrScrambledTransportStream_sql_query = "SELECT total.out_stream_id,\n" + \

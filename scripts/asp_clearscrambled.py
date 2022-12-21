@@ -6,8 +6,10 @@ import requests
 import os
 from datetime import datetime
 
-from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScrambledTransportStream_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
+from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 from asp_sql_statements import Defaultcommand1_sql_query, Defaultcommand2_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
+
+from getServiceGroups import getServiceGroups_json
 
 import mysql.connector as mysqlConnector
 import oracledb
@@ -30,7 +32,8 @@ def SSR_get_details(streamId):
     a = []
     res = {}
 
-    qry = getSsrServiceDetailByTsId_sql_query
+    #qry = getSsrServiceDetailByTsId_sql_query
+    qry = getNmxSsrServiceDetailByTsId_sql_query
 
     PLATFORM = obj.PLATFORM.upper()
 
@@ -53,21 +56,37 @@ def SSR_get_details(streamId):
         o = {}
         o["stream"] = streamId
         o["source_chan_id"] = row[0]
-        o["total"] = row[1]
-        o["defaults"] = row[2]
-        o["clear"] = row[3]
-        o["name"] = row[4]
+        o["si_service_id"] = row[1]
+        o["total"] = row[2]
+        o["defaults"] = row[3]
+        o["clear"] = row[4]
+        o["name"] = row[5]
+
+        if row[1] != None :
+            nmxStatus = get_nmx_reference(int(row[1]))
+            o["ServiceId"] =  nmxStatus["ServiceId"]
+            o["Status"] = nmxStatus["Status"]
+        else :
+            o["ServiceId"] =  ""
+            o["Status"] = ""
 
         a.append(o)
 
     res["status"] = "ok"
     res["data"] = a
     conn.close()
-
-    print(json.dumps(a, indent=4))
-
     return(res)
 
+def get_nmx_reference(si_service_id):
+
+    nmx = getServiceGroups_json
+
+    for g in nmx["rezult"]:
+        if len(g) > 0 :
+            for s in g:
+                if s["ServiceNumber"] == si_service_id :
+                    return {"ServiceId": s["ServiceId"], "Status": s["Status"]}
+    return {"ServiceId": "", "Status": ""}
 
 
 def SSR_get_streams():
