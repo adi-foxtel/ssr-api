@@ -313,6 +313,5 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
        return(res)
 
 
-
 if __name__ == '__main__':
     SSR_get_streams()
