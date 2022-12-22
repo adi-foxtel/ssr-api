@@ -88,7 +88,7 @@ def get_service_details(item_id):
 async def request_post(info : Request):
     req_info = await info.json()
     if req_info["command"] == "SCRAMBLED" or req_info["command"] == "CLEAR" or req_info["command"] == "SCRAMBLED_ARRAY" or req_info["command"] == "CLEAR_ARRAY" :
-        response =  SSR_current_streams(req_info["command"],req_info["service"],req_info["state"],req_info["defaultFlag"])
+        response =  SSR_current_streams( req_info["command"], req_info["stream"], req_info["service"], req_info["state"], req_info["defaultFlag"], req_info["ServiceId"])
         return JSONResponse(status_code=200, content=response)
     else :
         response =  SSR_current_streams(req_info["command"],req_info["stream"],None,None)

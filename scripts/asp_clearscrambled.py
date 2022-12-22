@@ -10,6 +10,7 @@ from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScramb
 from asp_sql_statements import Defaultcommand1_sql_query, Defaultcommand2_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 
 from getServiceGroups import getServiceGroups_json
+from asp_nmx_api import nmx_patch_channel
 
 import mysql.connector as mysqlConnector
 import oracledb
@@ -57,10 +58,11 @@ def SSR_get_details(streamId):
         o["stream"] = streamId
         o["source_chan_id"] = row[0]
         o["si_service_id"] = row[1]
-        o["total"] = row[2]
-        o["defaults"] = row[3]
-        o["clear"] = row[4]
-        o["name"] = row[5]
+        o["si_service_key"] = row[2]
+        o["total"] = row[3]
+        o["defaults"] = row[4]
+        o["clear"] = row[5]
+        o["name"] = row[6]
 
         if row[1] != None :
             nmxStatus = get_nmx_reference(int(row[1]))
@@ -70,11 +72,19 @@ def SSR_get_details(streamId):
             o["ServiceId"] =  ""
             o["Status"] = ""
 
+        if row[2] == row[0] :
+            o["Phantom"] = False
+        else :
+            o["Phantom"] = True
+
         a.append(o)
 
     res["status"] = "ok"
     res["data"] = a
     conn.close()
+    #print(qry)
+    #print(json.dumps(a, indent=4))
+
     return(res)
 
 def get_nmx_reference(si_service_id):
@@ -82,8 +92,10 @@ def get_nmx_reference(si_service_id):
     nmx = getServiceGroups_json
 
     for g in nmx["rezult"]:
+        #print(g)
         if len(g) > 0 :
             for s in g:
+                #print(s)
                 if s["ServiceNumber"] == si_service_id :
                     return {"ServiceId": s["ServiceId"], "Status": s["Status"]}
     return {"ServiceId": "", "Status": ""}
@@ -132,7 +144,7 @@ def SSR_get_streams():
     print(json.dumps(a, indent=4))
     return(res)
 
-def SSR_current_streams(command,streamId,state,defaultFlag):
+def SSR_current_streams( command, streamId, channelId, state, defaultFlag, ServiceId):
 
     NoneType = type(None)
 
@@ -141,12 +153,12 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
     PLATFORM = obj.PLATFORM.upper()
 
     if type(state) == NoneType :
-        if type(streamId) == NoneType :
+        if type(channelId) == NoneType :
             print(PLATFORM + " " + command )
         else :
-            print(PLATFORM + " " + command + " " + str(streamId) )
+            print(PLATFORM + " " + command + " " + str(channelId) )
     else :
-        print(PLATFORM + " " + command + " " + str(streamId) + " " + state + " " + str(defaultFlag) )
+        print(PLATFORM + " " + command + " " + str(channelId) + " " + state + " " + str(defaultFlag) )
 
     choices = {
         'getconfigured': getScrambledLocalObj_sql_query,
@@ -182,7 +194,9 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
         if type(state) != NoneType :
 
             if command == "SCRAMBLED_ARRAY" :
-                for x in streamId:
+                i=0
+                res["data"] = []
+                for x in channelId:
                     print("\n*** Switch to Default START\n")
                     qry = SCRcommand_sql_query
 
@@ -196,9 +210,22 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
                     cur.execute(qry)
                     conn.commit()
                     print("\n*** Switch to Default END\n")
+                    ret = f"ssr, switch {x} to Clear ok"
+                    res["data"].append(ret)
+                    if ServiceId[i] != "" :
+                        print("\n*** Switch to NMX Default START\n")
+                        ret = nmx_patch_channel( streamId, ServiceId[i], "Scramble")
+                        print(ret)
+                        print("\n*** Switch to NMX Default END\n")
+                        res["data"].append(ret["rezult"])
+                    i += 1
+
+
 
             elif command == "CLEAR_ARRAY" :
-                for x in streamId:
+                i=0
+                res["data"] = []
+                for x in channelId:
                     print("\n*** Switch to CLEAR\n")
                     qry = CLRcommand_sql_query
 
@@ -210,6 +237,16 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
                     cur.execute(qry)
                     conn.commit()
                     print("\n***Switch to CLEAR END\n")
+                    ret = f"ssr, switch {x} to Clear ok"
+                    res["data"].append(ret)
+                    if ServiceId[i] != "" :
+                        print("\n*** Switch to NMX CLEAR START\n")
+                        ret = nmx_patch_channel( streamId, ServiceId[i], "Clear")
+                        print(ret)
+                        print("\n*** Switch to NMX CLEAR END\n")
+                        res["data"].append(ret["rezult"])
+                    i += 1
+
 
             elif command == "SCRAMBLED" :
 
@@ -220,11 +257,21 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
                     qry = qry.replace("SUBSTR(NOTES,INSTR(NOTES,'(')+1,(INSTR(NOTES,')')-INSTR(NOTES,'(')-1))","NULLIF(SUBSTR(NOTES,INSTR(NOTES,'(')+1,(INSTR(NOTES,')')-INSTR(NOTES,'(')-1)),'')")
                     qry = qry.replace("DEFAULT", "Default")
 
-                qry = qry.replace("?", str(streamId))
+                qry = qry.replace("?", str(channelId))
                 print(qry)
                 cur.execute(qry)
                 conn.commit()
+                ret = f"ssr, switch {channelId} to Scramble ok"
+                res["data"] = []
+                res["data"].append(ret)
                 print("\n*** Switch to Default END\n")
+
+                if ServiceId != "" :
+                    print("\n*** Switch to NMX Default START\n")
+                    ret = nmx_patch_channel( streamId, ServiceId, "Scramble")
+                    print(ret)
+                    print("\n*** Switch to NMX Default END\n")
+                    res["data"].append(ret["rezult"])
 
             elif command == "CLEAR" :
 
@@ -234,27 +281,37 @@ def SSR_current_streams(command,streamId,state,defaultFlag):
                 if(PLATFORM == "DEV") :
                     qry = qry.upper()
 
-                qry = qry.replace("?", str(streamId))
+                qry = qry.replace("?", str(channelId))
                 print(qry)
                 cur.execute(qry)
                 conn.commit()
+                ret = f"ssr, switch {channelId} to Clear ok"
+                res["data"] = []
+                res["data"].append(ret)
                 print("\n***Switch to CLEAR END\n")
 
-            o = {}
-            a.append(o)
-            res["data"].push(a)
+                if ServiceId != "" :
+                    print("\n*** Switch NMX to Clear START\n")
+                    ret = nmx_patch_channel( streamId, ServiceId, "Clear")
+                    print(ret)
+                    print("\n*** Switch NMX to Clear END\n")
+                    res["data"].append(ret["rezult"])
+
+            res["status"] = "ok"
+            res["request"] = qry
 
     except Exception as e:
 
-        res["status"].push("error")
-        res["request"].push(qry)
-        res["data"].push(e)
+        res["status"] = "error"
+        res["request"] = qry
+        res["data"] = e
 
     finally :
 
        # Closing the connection
        conn.close()
        return(res)
+
 
 
 if __name__ == '__main__':
