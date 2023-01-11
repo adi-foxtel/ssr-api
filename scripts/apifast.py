@@ -41,10 +41,12 @@ app.add_middleware(
 )
 app.add_route("/metrics", handle_metrics)
 
+logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
-async def startup_event():
-    logging.debug('startup_event')
+@repeat_every(seconds=30, logger=logger, wait_first=False)
+def periodic():
+    nmx_get_harmonic_config()
 
 
 @app.on_event("shutdown")

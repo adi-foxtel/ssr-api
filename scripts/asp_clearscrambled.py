@@ -9,7 +9,6 @@ from datetime import datetime
 from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 from asp_sql_statements import Defaultcommand1_sql_query, Defaultcommand2_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 
-from getServiceGroups import getServiceGroups_json
 from asp_nmx_api import nmx_patch_channel
 
 import mysql.connector as mysqlConnector
@@ -22,6 +21,7 @@ class InitDataClass:
     DATABASE = os.environ['DATABASE']
     USER = os.environ['USER']
     PASSWORD = os.environ['PASSWORD']
+
 
 
 
@@ -82,23 +82,31 @@ def SSR_get_details(streamId):
     res["status"] = "ok"
     res["data"] = a
     conn.close()
-    #print(qry)
-    #print(json.dumps(a, indent=4))
 
     return(res)
 
 def get_nmx_reference(si_service_id):
 
-    nmx = getServiceGroups_json
+    if os.path.exists('scripts/harmonic_config' + '.json') == True :
 
-    for g in nmx["rezult"]:
-        #print(g)
-        if len(g) > 0 :
-            for s in g:
-                #print(s)
-                if s["ServiceNumber"] == si_service_id :
-                    return {"ServiceId": s["ServiceId"], "Status": s["Status"]}
-    return {"ServiceId": "", "Status": ""}
+        nmx = {}
+        nmx["rezult"] = json.load(open('scripts/harmonic_config' + '.json', 'r'))
+
+        for g in nmx["rezult"]:
+            #print(g)
+            if len(g) > 0 :
+                for s in g:
+                    #print(s)
+                    if s["ServiceNumber"] == si_service_id :
+                        return {"ServiceId": s["ServiceId"], "Status": s["Status"]}
+
+        return {"ServiceId": "", "Status": ""}
+    
+    else :
+
+        return {"ServiceId": "", "Status": ""}
+
+
 
 
 def SSR_get_streams():
@@ -158,7 +166,7 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
         else :
             print(PLATFORM + " " + command + " " + str(channelId) )
     else :
-        print(PLATFORM + " " + command + " " + str(channelId) + " " + state + " " + str(defaultFlag) )
+        print(PLATFORM + " " + command + " " + str(channelId) )
 
     choices = {
         'getconfigured': getScrambledLocalObj_sql_query,
@@ -250,7 +258,6 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
 
             elif command == "SCRAMBLED" :
 
-                print("\n*** Switch to Default START\n")
                 qry = SCRcommand_sql_query
                 if(PLATFORM == "DEV") :
                     qry = qry.upper()
@@ -264,18 +271,14 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 ret = f"ssr, switch {channelId} to Scramble ok"
                 res["data"] = []
                 res["data"].append(ret)
-                print("\n*** Switch to Default END\n")
 
                 if ServiceId != "" :
-                    print("\n*** Switch to NMX Default START\n")
+
                     ret = nmx_patch_channel( streamId, ServiceId, "Scramble")
-                    print(ret)
-                    print("\n*** Switch to NMX Default END\n")
                     res["data"].append(ret["rezult"])
 
             elif command == "CLEAR" :
 
-                print("\n*** Switch to CLEAR\n")
                 qry = CLRcommand_sql_query
 
                 if(PLATFORM == "DEV") :
@@ -288,13 +291,10 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 ret = f"ssr, switch {channelId} to Clear ok"
                 res["data"] = []
                 res["data"].append(ret)
-                print("\n***Switch to CLEAR END\n")
 
                 if ServiceId != "" :
-                    print("\n*** Switch NMX to Clear START\n")
+
                     ret = nmx_patch_channel( streamId, ServiceId, "Clear")
-                    print(ret)
-                    print("\n*** Switch NMX to Clear END\n")
                     res["data"].append(ret["rezult"])
 
             res["status"] = "ok"
