@@ -9,10 +9,14 @@ from datetime import datetime
 
 import mysql.connector as mysqlConnector
 
+
 class InitDataClass:
-    NMX = os.environ['NMX']
-    NMX_USER = os.environ['NMX_USER']
-    NMX_PASS = os.environ['NMX_PASS']
+    #NMX = os.environ['NMX']
+    #NMX_USER = os.environ['NMX_USER']
+    #NMX_PASS = os.environ['NMX_PASS']
+    NMX="10.243.172.221"
+    NMX_USER="Administrator"
+    NMX_PASS="harmonic"      
 
 obj = InitDataClass()
 
@@ -123,7 +127,7 @@ def nmx_patch_channel(stream,id,status):
                                 print(f"newStatus {st}")
                                 print(g)
                                 
-                with open('harmonic_config' + '.json', 'w') as f:
+                with open('scripts/harmonic_config' + '.json', 'w') as f:
                     json.dump(savedServiceGroups_json, f, indent=4, sort_keys=True)
             #==================================================================
             rezult = {"rezult": data, "Group": stream }
@@ -200,7 +204,6 @@ def nmx_get_service_plans_scrambling_lists():
 
 
 
-
 def nmx_get_service_lists():
     
     ret = nmx_get_devicesaccess_token()
@@ -247,6 +250,54 @@ def nmx_get_service_lists():
         return({"rezult": objectServices})
 
     return {"rezult": "nmx_get_devicesaccess_token error"} 
+
+
+def nmx_compare_local_and_harmonic_config():
+
+    json_harmonic = json.load(open('scripts/harmonic_config' + '.json', 'r'))
+    json_local = json.load(open('scripts/harmonic_config_local' + '.json', 'r'))
+
+    res = []
+
+    if json_harmonic != json_local :
+
+        for b in json_harmonic:
+            if len(b) > 0 :
+                for r in b :
+
+                    for a in json_local:
+                        if len(a) > 0 :
+                            for p in a :
+
+                                if p["ServiceId"] == r["ServiceId"] and p["Status"] != r["Status"] :
+                                    res.append(r)
+
+
+    return(res)
+
+
+def nmx_save_copy_harmonic_config():
+
+    print("nmx_save_copy_harmonic_config")
+
+    if os.path.exists('scripts/harmonic_config' + '.json') == True :
+
+        json_data = json.load(open('scripts/harmonic_config' + '.json', 'r'))
+
+        if os.path.exists('scripts/harmonic_config_local' + '.json') == False :
+
+            with open('scripts/harmonic_config_local' + '.json', 'w+') as f:
+                json.dump( json_data, f, indent=4, sort_keys=True)
+
+            print("harmonic_config_copy.json created")
+        
+        else :
+
+            with open('scripts/harmonic_config_local' + '.json', 'w') as f:
+                json.dump( json_data, f, indent=4, sort_keys=True)
+
+            print("harmonic_config_copy.json updated")
+
 
 
 
@@ -322,13 +373,13 @@ def nmx_get_harmonic_config():
 
                         ServiceGroupsSorted[int(i['group'])].append(i['service'])
 
-            if os.path.exists('harmonic_config' + '.json') == False :
-                with open('harmonic_config' + '.json', 'w+') as f:
+            if os.path.exists('scripts/harmonic_config' + '.json') == False :
+                with open('scripts/harmonic_config' + '.json', 'w+') as f:
                     json.dump( ServiceGroupsSorted, f, indent=4, sort_keys=True)
                 print("harmonic_config.json created")
 
             else :
-                with open('harmonic_config' + '.json', 'w') as f:
+                with open('scripts/harmonic_config' + '.json', 'w') as f:
                     json.dump(ServiceGroupsSorted, f, indent=4, sort_keys=True)
                 print("harmonic_config.json updated")
 

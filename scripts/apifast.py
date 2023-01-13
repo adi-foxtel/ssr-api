@@ -43,11 +43,17 @@ app.add_route("/metrics", handle_metrics)
 
 logger = logging.getLogger(__name__)
 
+count = 0
+
 @app.on_event("startup")
 @repeat_every(seconds=30, logger=logger, wait_first=False)
 def periodic():
+    global count
     nmx_get_harmonic_config()
-
+    if count == 0 :
+        nmx_save_copy_harmonic_config()
+    
+    count += 1
 
 @app.on_event("shutdown")
 def shutdown_event():
@@ -124,6 +130,10 @@ def get_nmx_scrambling_lists():
     response = nmx_get_service_plans_scrambling_lists()
     return JSONResponse(status_code=200, content=response)
 
+@app.get("/platform/manage/picture/scrambled/nmx/getRealTimeConfigChange")
+def get_nmx_scrambling_lists():
+    response = nmx_compare_local_and_harmonic_config()
+    return JSONResponse(status_code=200, content=response)
 
 @app.post("/platform/manage/picture/scrambled/nmx/setClearScramble")
 async def request_post(info : Request):
