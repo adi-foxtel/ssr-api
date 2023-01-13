@@ -131,7 +131,7 @@ def get_nmx_scrambling_lists():
     return JSONResponse(status_code=200, content=response)
 
 @app.get("/platform/manage/picture/scrambled/nmx/getRealTimeConfigChange")
-def get_nmx_scrambling_lists():
+def get_nmx_realtime_compare_list():
     response = nmx_compare_local_and_harmonic_config()
     return JSONResponse(status_code=200, content=response)
 

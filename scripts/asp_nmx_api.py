@@ -114,21 +114,25 @@ def nmx_patch_channel(stream,id,status):
             r = session.patch(url, json=body, headers=headers)
             data = json.loads(r.text)
             #==================================================================
-            if os.path.exists('scripts/harmonic_config' + '.json') == True :
-                savedServiceGroups_json = json.load(open('scripts/harmonic_config' + '.json', 'r'))
+            if os.path.exists('scripts/harmonic_config_local' + '.json') == True :
+                savedServiceGroups_json = json.load(open('scripts/harmonic_config_local' + '.json', 'r'))
                 for g in savedServiceGroups_json:
                     if len(g) > 0 :
                         for s in g:
                             if s["ServiceId"] == id :
-                                st = s["Status"]
-                                print(f"oldStatus {st}")
+                                sto = s["Status"]
                                 s["Status"] = status
-                                st = s["Status"]
-                                print(f"newStatus {st}")
-                                print(g)
+                                stn = s["Status"]
+                                print(f"oldStatus {sto} newStatus {stn}")
                                 
+                with open('scripts/harmonic_config_local' + '.json', 'w') as f:
+                    json.dump(savedServiceGroups_json, f, indent=4, sort_keys=True)
+                    print("Patch change saved in harmonic_config_local.json")
+
                 with open('scripts/harmonic_config' + '.json', 'w') as f:
                     json.dump(savedServiceGroups_json, f, indent=4, sort_keys=True)
+                    print("Patch change saved in harmonic_config.json")
+
             #==================================================================
             rezult = {"rezult": data, "Group": stream }
             print(rezult)
@@ -289,7 +293,7 @@ def nmx_save_copy_harmonic_config():
             with open('scripts/harmonic_config_local' + '.json', 'w+') as f:
                 json.dump( json_data, f, indent=4, sort_keys=True)
 
-            print("harmonic_config_copy.json created")
+            print("harmonic_config_local.json created")
         
         else :
 
