@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+'''
 getSsrServiceDetailByTsId_sql_query = "SELECT total.source_chan_id,\n"+\
     "total.cnt as total,\n"+\
     "NVL(DEFAULTS.cnt, 0) as DEFAULTS,\n"+\
@@ -39,6 +39,7 @@ getSsrServiceDetailByTsId_sql_query = "SELECT total.source_chan_id,\n"+\
     "    group by source_chan_id\n"+\
     ") clear ON clear.source_chan_id = total.source_chan_id\n"+\
     "ORDER BY source_chan_id ASC"
+'''
 
 getNmxSsrServiceDetailByTsId_sql_query = "SELECT total.source_chan_id, si_service_id, si_service_key,\n"+\
     "total.cnt as total,\n"+\

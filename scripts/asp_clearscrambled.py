@@ -6,7 +6,7 @@ import requests
 import os
 from datetime import datetime
 
-from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
+from asp_sql_statements import getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 from asp_sql_statements import Defaultcommand1_sql_query, Defaultcommand2_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 
 from asp_nmx_api import nmx_patch_channel
@@ -33,7 +33,6 @@ def SSR_get_details(streamId):
     a = []
     res = {}
 
-    #qry = getSsrServiceDetailByTsId_sql_query
     qry = getNmxSsrServiceDetailByTsId_sql_query
 
     PLATFORM = obj.PLATFORM.upper()
@@ -170,7 +169,6 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
 
     choices = {
         'getconfigured': getScrambledLocalObj_sql_query,
-        'gettservicedetail': getSsrServiceDetailByTsId_sql_query,
         'gettsstreams': getSsrScrambledTransportStream_sql_query,
         'CLEAR': CLRcommand_sql_query,
         'SCRAMBLED': SCRcommand_sql_query,
@@ -272,10 +270,10 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 res["data"] = []
                 res["data"].append(ret)
 
-                if ServiceId != "" :
-
-                    ret = nmx_patch_channel( streamId, ServiceId, "Scramble")
-                    res["data"].append(ret["rezult"])
+                for x in ServiceId:
+                    if x != "" :
+                        ret = nmx_patch_channel( streamId, x, "Scramble")
+                        res["data"].append(ret["rezult"])
 
             elif command == "CLEAR" :
 
@@ -292,10 +290,10 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 res["data"] = []
                 res["data"].append(ret)
 
-                if ServiceId != "" :
-
-                    ret = nmx_patch_channel( streamId, ServiceId, "Clear")
-                    res["data"].append(ret["rezult"])
+                for x in ServiceId:
+                    if x != "" :
+                        ret = nmx_patch_channel( streamId, x, "Clear")
+                        res["data"].append(ret["rezult"])
 
             res["status"] = "ok"
             res["request"] = qry
