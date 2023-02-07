@@ -267,6 +267,7 @@ def nmx_compare_local_and_harmonic_config():
         if ret['rezult'] == "nmx_get_devicesaccess_token error" :
             res["status"] = "error"
             res["data"] = ret['NMX Server Offline']
+            print(res)
             return(res)
 
     json_harmonic = json.load(open('scripts/harmonic_config' + '.json', 'r'))
@@ -287,6 +288,7 @@ def nmx_compare_local_and_harmonic_config():
 
     res["status"] = "ok"
     res["data"] = compare
+    print(res)
     return(res)
 
 
