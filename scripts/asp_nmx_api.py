@@ -258,10 +258,19 @@ def nmx_get_service_lists():
 
 def nmx_compare_local_and_harmonic_config():
 
+    res = []
+    compare = []
+
+    ret = nmx_get_devicesaccess_token()
+
+    if isinstance(ret['rezult'], str) :
+        if ret['rezult'] == "nmx_get_devicesaccess_token error" :
+            res["status"] = "error"
+            res["data"] = ret['NMX Server Offline']
+            return(res)
+
     json_harmonic = json.load(open('scripts/harmonic_config' + '.json', 'r'))
     json_local = json.load(open('scripts/harmonic_config_local' + '.json', 'r'))
-
-    res = []
 
     if json_harmonic != json_local :
 
@@ -274,9 +283,10 @@ def nmx_compare_local_and_harmonic_config():
                             for p in a :
 
                                 if p["ServiceId"] == r["ServiceId"] and p["Status"] != r["Status"] :
-                                    res.append(r)
+                                    compare.append(r)
 
-
+    res["status"] = "ok"
+    res["data"] = compare
     return(res)
 
 
