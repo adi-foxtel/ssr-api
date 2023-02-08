@@ -140,6 +140,12 @@ async def request_post(info : Request):
     req_info = await info.json()
     response =  nmx_patch_channel( req_info["Group"], req_info["ID"], req_info["status"])
     return JSONResponse(status_code=200, content=response)
+            
+@app.post("/platform/manage/picture/scrambled/nmx/synchronization")
+async def synchronization_post(info : Request):
+    req_info = await info.json()
+    response =  nmx_synchronization( req_info )
+    return JSONResponse(status_code=200, content=response)
 
 
 serverport = int(os.getenv('MYSQL_API_PORT', 9001))

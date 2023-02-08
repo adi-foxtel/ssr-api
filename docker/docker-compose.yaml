@@ -23,10 +23,6 @@ services:
 #      USER: "casops"
 #      PASSWORD: "copsaretops"
 
-      NMX: "10.243.172.221"
-      NMX_USER: "Administrator"
-      NMX_PASS: "harmonic"      
-
 #      PLATFORM: "PROD"
 #      LOG_LEVEL: 10
 #      HOST: "10.233.162.135"
@@ -34,6 +30,15 @@ services:
 #      DATABASE: "SSRSTBY"
 #      USER: "system"
 #      PASSWORD: "t3chn0l0gy"
+
+#      #S1: "10.196.12.25"
+#      #S2: "10.196.12.89"
+#      #SERVER: "10.196.12.25"
+#      #SERVER: "10.196.12.89"      
+
+#      #NMX: "x.x.x.x"
+#      #NMX_USER: "Administrator"
+#      #NMX_PASS: "harmonic"      
 
       PLATFORM: "NPD"
       LOG_LEVEL: 10
@@ -43,6 +48,15 @@ services:
       USER: "system"
       PASSWORD: "t3chn0l0gy"
 
+      # PTS
+      S1: "10.197.12.25"
+      S2: "10.197.12.89"
+      SERVER: "10.197.12.25"
+      #SERVER: "10.197.12.89"
+
+      NMX: "10.243.172.221"
+      NMX_USER: "Administrator"
+      NMX_PASS: "harmonic"      
 
     healthcheck:
        #test: ["CMD", "curl", "-X", "POST", "http://apiusername:apipassword@localhost:5000/api", "-o", "/dev/null"]

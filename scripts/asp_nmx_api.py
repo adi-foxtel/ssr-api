@@ -16,9 +16,63 @@ class InitDataClass:
     #NMX_PASS = os.environ['NMX_PASS']
     NMX="10.243.172.221"
     NMX_USER="Administrator"
-    NMX_PASS="harmonic"      
+    NMX_PASS="harmonic"
+    S1 = os.environ['S1']
+    S2 = os.environ['S2']
+    SERVER = os.environ['SERVER']    
 
 obj = InitDataClass()
+
+
+def sync_the_other_server(data):
+
+    headers = {
+        'Content-Type': "application/json",
+        'Accept': "application/json"
+    }
+
+    PORT = 9001
+
+    if obj.SERVER == obj.S1 :
+        url = f"http://{obj.S2}:{PORT}/platform/manage/picture/scrambled/nmx/synchronization"
+    else :
+        url = f"http://{obj.S1}:{PORT}/platform/manage/picture/scrambled/nmx/synchronization"
+
+    print(url)
+
+    requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+    session = requests.Session()
+    session.verify = False
+    
+    try:        
+        r = session.post(url, json=data, headers=headers)
+        data = json.loads(r.text)
+        rezult = {"rezult": data }
+        print(rezult)
+        return rezult
+
+    except Exception as e:
+        print(e)
+        return {"rezult": "sync_the_other_server error"}
+
+
+def nmx_synchronization(data) :
+
+    try:
+        with open('scripts/harmonic_config_local' + '.json', 'w') as f:
+            json.dump(data, f, indent=4, sort_keys=True)
+            print("Patch change from other server saved in harmonic_config_local.json")
+
+        with open('scripts/harmonic_config' + '.json', 'w') as f:
+            json.dump(data, f, indent=4, sort_keys=True)
+            print("Patch change from other server saved in harmonic_config.json")
+
+        return {"rezult": "ok"}
+
+    except Exception as e:
+        print(e)
+        return {"rezult": "nmx_synchronization error"}
+
 
 def nmx_get_devicesaccess_token():
 
@@ -132,6 +186,8 @@ def nmx_patch_channel(stream,id,status):
                 with open('scripts/harmonic_config' + '.json', 'w') as f:
                     json.dump(savedServiceGroups_json, f, indent=4, sort_keys=True)
                     print("Patch change saved in harmonic_config.json")
+
+            sync_the_other_server(savedServiceGroups_json)    
 
             #==================================================================
             rezult = {"rezult": data, "Group": stream }
