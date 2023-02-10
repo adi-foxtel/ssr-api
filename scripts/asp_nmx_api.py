@@ -225,6 +225,10 @@ def nmx_get_service_plans_scrambling_lists():
             r = session.get( url, headers=headers)
             data = json.loads(r.text)
 
+            if "Message" in data :
+                print(data["Message"])
+                return {"rezult": data["Message"] }
+
             scrambling=[]
 
             ID = 'undefined'
@@ -423,6 +427,9 @@ def nmx_get_harmonic_config():
 
 
         ret = nmx_get_service_plans_scrambling_lists()
+        
+        if isinstance(ret['rezult'], str) :
+            return {"rezult": ret['rezult']} 
 
         ServiceGroups.sort(key=sortByServiceNumber)
 
@@ -517,6 +524,9 @@ def nmx_get_service_groups():
 
 
         ret = nmx_get_service_plans_scrambling_lists()
+
+        if isinstance(ret['rezult'], str) :
+            return {"rezult": ret['rezult']}  
 
         ServiceGroups.sort(key=sortByServiceNumber)
 
