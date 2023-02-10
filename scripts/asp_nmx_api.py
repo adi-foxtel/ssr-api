@@ -322,7 +322,7 @@ def nmx_compare_local_and_harmonic_config():
     if isinstance(ret['rezult'], str) :
         if ret['rezult'] == "nmx_get_devicesaccess_token error" :
             res["status"] = "error"
-            res["data"] = ret['NMX Server Offline']
+            res["data"] = 'NMX Server Offline'
             print(res)
             return(res)
 
