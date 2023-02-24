@@ -11,15 +11,31 @@ import mysql.connector as mysqlConnector
 
 
 class InitDataClass:
-    #NMX = os.environ['NMX']
-    #NMX_USER = os.environ['NMX_USER']
-    #NMX_PASS = os.environ['NMX_PASS']
-    NMX="10.243.172.221"
-    NMX_USER="Administrator"
-    NMX_PASS="harmonic"
-    S1 = os.environ['S1']
-    S2 = os.environ['S2']
-    SERVER = os.environ['SERVER']    
+
+#    PLATFORM = os.environ['PLATFORM']
+#    NMX = os.environ['NMX']
+#    NMX2 = os.environ['NMX2']
+#    NMX_SITE: os.environ['NMX_SITE']
+#    NMX2_SITE: os.environ['NMX2_SITE']
+#    NMX_USER = os.environ['NMX_USER']
+#    NMX_PASS = os.environ['NMX_PASS']
+#    S1 = os.environ['S1']
+#    S2 = os.environ['S2']
+#    SERVER = os.environ['SERVER']    
+
+    PLATFORM = "NPD"
+    NMX = "10.243.172.221"
+    NMX2 = "10.243.172.221"
+    NMX_SITE = "PTS"
+    NMX2_SITE = "PTS"
+
+    NMX_USER = "Administrator"
+    NMX_PASS = "harmonic"
+    S1 = "10.197.12.25"
+    S2 = "10.197.12.89"
+    SERVER = "10.197.12.25"    
+
+
 
 obj = InitDataClass()
 
@@ -77,27 +93,59 @@ def nmx_synchronization(data) :
 def nmx_get_devicesaccess_token():
 
     headers = {'content-type': 'application/json'}
-    url = f"https://{obj.NMX}/api/Domain/v2/AccessToken"
 
     data = {
         "Username": obj.NMX_USER,
         "Password": obj.NMX_PASS
     }
 
-    try:
-        requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-        session = requests.Session()
-        session.verify = False
+    if obj.NMX == obj.NMX2 :
 
-        r = session.post( url, headers=headers, json=data)
-        data = json.loads(r.text)
+        url = f"https://{obj.NMX}/api/Domain/v2/AccessToken"
 
-        return {"rezult": data}
+        try:
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+            session = requests.Session()
+            session.verify = False
 
-    except Exception as e:
-        print(e)
-        return {"rezult": "nmx_get_devicesaccess_token error"}
+            r = session.post( url, headers=headers, json=data)
+            data = json.loads(r.text)
+
+            return {"rezult": data}
+
+        except Exception as e:
+            print(e)
+            return {"rezult": "nmx_get_devicesaccess_token error"}
         
+    else :
+
+        url = f"https://{obj.NMX}/api/Domain/v2/AccessToken"
+
+        try:
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+            session = requests.Session()
+            session.verify = False
+
+            r = session.post( url, headers=headers, json=data)
+            data1 = json.loads(r.text)
+
+            url = f"https://{obj.NMX2}/api/Domain/v2/AccessToken"
+
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+            session = requests.Session()
+            session.verify = False
+
+            r = session.post( url, headers=headers, json=data)
+            data2 = json.loads(r.text)
+
+            return {"rezult": [ data1, data2 ]}
+
+        except Exception as e:
+            print(e)
+            return {"rezult": "nmx_get_devicesaccess_token error"}
+
+ #############################################################################       
+
 def nmx_get_devices():
     
     ret = nmx_get_devicesaccess_token()
@@ -385,84 +433,87 @@ def nmx_get_harmonic_config():
 
     if not isinstance(ret['rezult'], str) :
         
-        access_token = ret['rezult']['access_token']
-        headers = {
-            'Accept': "application/json",
-            'Authorization': f"Bearer {access_token}"
-        }
+        if len(ret['rezult']) == 1 :
+            access_token = ret['rezult']['access_token']
+            headers = {
+                'Accept': "application/json",
+                'Authorization': f"Bearer {access_token}"
+            }
 
-        ret = nmx_get_devices()
+            ret = nmx_get_devices()
 
-        if not isinstance(ret['rezult'], str) :
+            if not isinstance(ret['rezult'], str) :
+                
+                ServiceGroups = []
+                ServiceGroupsSorted = [
+                    [] for a in range(100)
+                ]
+                
+                for i in ret['rezult']:
+
+                    ID = i['ID']
+                    url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
+                    requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+                    session = requests.Session()
+                    session.verify = False
+
+                    try:
+                        r = session.get( url, headers=headers)
+                        data = json.loads(r.text)
+
+                        if len(data) > 0 :
+
+                            for s in data:
+                                tag = str(s["ServiceNumber"])
+                                if len(tag) > 3 :
+                                    tag_service = tag[-3:]
+                                    tag_group   = tag[:len(tag) - 3]
+                                    ServiceGroups.append({"group": int(tag_group), "service": s})
+
+                    except Exception as e:
+                        print(e)
+                        return {"rezult": "nmx_get_service_list error"}
+
+
+            ret = nmx_get_service_plans_scrambling_lists()
             
-            ServiceGroups = []
-            ServiceGroupsSorted = [
-                [] for a in range(100)
-            ]
-            
-            for i in ret['rezult']:
+            if isinstance(ret['rezult'], str) :
+                return {"rezult": ret['rezult']} 
 
-                ID = i['ID']
-                url = f"https://{obj.NMX}/api/Topology/v2/Devices/{ID}/ServiceList"
-                requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-                session = requests.Session()
-                session.verify = False
+            ServiceGroups.sort(key=sortByServiceNumber)
 
-                try:
-                    r = session.get( url, headers=headers)
-                    data = json.loads(r.text)
+            if not isinstance(ret['rezult'], str) :
+                
+                plan = ret['rezult']
 
-                    if len(data) > 0 :
+                for i in ServiceGroups :
 
-                        for s in data:
-                            tag = str(s["ServiceNumber"])
-                            if len(tag) > 3 :
-                                tag_service = tag[-3:]
-                                tag_group   = tag[:len(tag) - 3]
-                                ServiceGroups.append({"group": int(tag_group), "service": s})
+                    for p in plan:
+                        if p['Name'] == str(i['service']['ServiceNumber']) :
 
-                except Exception as e:
-                    print(e)
-                    return {"rezult": "nmx_get_service_list error"}
+                            tag = p['Name']
+                            tag_service = tag[-3:]
+                            tag_group   = tag[:len(tag) - 3]
+                            i['service']['Channel'] = int(tag_service)
+                            i['service']['Group'] = int(tag_group)
+                            i['service']['Status'] = p['Status']
+                            i['service']['ServiceId'] = p['ID']
 
+                            ServiceGroupsSorted[int(i['group'])].append(i['service'])
 
-        ret = nmx_get_service_plans_scrambling_lists()
-        
-        if isinstance(ret['rezult'], str) :
-            return {"rezult": ret['rezult']} 
+                if os.path.exists('scripts/harmonic_config' + '.json') == False :
+                    with open('scripts/harmonic_config' + '.json', 'w+') as f:
+                        json.dump( ServiceGroupsSorted, f, indent=4, sort_keys=True)
+                    print("harmonic_config.json created")
 
-        ServiceGroups.sort(key=sortByServiceNumber)
+                else :
+                    with open('scripts/harmonic_config' + '.json', 'w') as f:
+                        json.dump(ServiceGroupsSorted, f, indent=4, sort_keys=True)
+                    print("harmonic_config.json updated")
 
-        if not isinstance(ret['rezult'], str) :
-            
-            plan = ret['rezult']
-
-            for i in ServiceGroups :
-
-                for p in plan:
-                    if p['Name'] == str(i['service']['ServiceNumber']) :
-
-                        tag = p['Name']
-                        tag_service = tag[-3:]
-                        tag_group   = tag[:len(tag) - 3]
-                        i['service']['Channel'] = int(tag_service)
-                        i['service']['Group'] = int(tag_group)
-                        i['service']['Status'] = p['Status']
-                        i['service']['ServiceId'] = p['ID']
-
-                        ServiceGroupsSorted[int(i['group'])].append(i['service'])
-
-            if os.path.exists('scripts/harmonic_config' + '.json') == False :
-                with open('scripts/harmonic_config' + '.json', 'w+') as f:
-                    json.dump( ServiceGroupsSorted, f, indent=4, sort_keys=True)
-                print("harmonic_config.json created")
-
-            else :
-                with open('scripts/harmonic_config' + '.json', 'w') as f:
-                    json.dump(ServiceGroupsSorted, f, indent=4, sort_keys=True)
-                print("harmonic_config.json updated")
-
-            return({"rezult":ServiceGroupsSorted})
+                return({"rezult":ServiceGroupsSorted})
+        else :
+            print("not implemented")
 
     return {"rezult": "nmx_get_service_groups error"} 
 

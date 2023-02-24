@@ -23,6 +23,8 @@ services:
 #      USER: "casops"
 #      PASSWORD: "copsaretops"
 
+#=====================================
+
 #      PLATFORM: "PROD"
 #      LOG_LEVEL: 10
 #      HOST: "10.233.162.135"
@@ -36,10 +38,15 @@ services:
 #      #SERVER: "10.196.12.25"
 #      #SERVER: "10.196.12.89"      
 
-#      #NMX: "x.x.x.x"
-#      #NMX_USER: "Administrator"
-#      #NMX_PASS: "harmonic"      
+#      NMX:  "10.23.172.221"
+#      NMX2: "10.233.172.221"
+#      NMX_SITE: "ART"
+#      NMX2_SITE: "OXF"
 
+#      NMX_USER: "Administrator"
+#      NMX_PASS: "harmonic"      
+
+#=====================================
       PLATFORM: "NPD"
       LOG_LEVEL: 10
       HOST: "10.233.160.135"
@@ -47,14 +54,17 @@ services:
       DATABASE: "SSR"
       USER: "system"
       PASSWORD: "t3chn0l0gy"
-
-      # PTS
       S1: "10.197.12.25"
       S2: "10.197.12.89"
       SERVER: "10.197.12.25"
       #SERVER: "10.197.12.89"
 
-      NMX: "10.243.172.221"
+      NMX:  "10.243.172.221"
+      NMX2: "10.243.172.221"
+
+      NMX_SITE: "PTS"
+      NMX2_SITE: "PTS"
+
       NMX_USER: "Administrator"
       NMX_PASS: "harmonic"      
 

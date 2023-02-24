@@ -6,21 +6,33 @@ import requests
 import os
 from datetime import datetime
 
-from asp_sql_statements import getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
+from asp_sql_statements import getSsrServiceDetailByTsId_sql_query, getSsrScrambledTransportStream_sql_query, getNmxSsrServiceDetailByTsId_sql_query, getScrambledLocalObj_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 from asp_sql_statements import Defaultcommand1_sql_query, Defaultcommand2_sql_query, CLRcommand_sql_query, SCRcommand_sql_query
 
-from asp_nmx_api import nmx_patch_channel
+from test_nmx import nmx_patch_channel
 
 import mysql.connector as mysqlConnector
 import oracledb
 
 class InitDataClass:
     PLATFORM = os.environ['PLATFORM']
+
     HOST = os.environ['HOST']
     PORT = os.environ['PORT']
     DATABASE = os.environ['DATABASE']
     USER = os.environ['USER']
     PASSWORD = os.environ['PASSWORD']
+
+    NMX = os.environ['NMX']
+    NMX2 = os.environ['NMX2']
+    NMX_SITE: os.environ['NMX_SITE']
+    NMX2_SITE: os.environ['NMX2_SITE']
+    NMX_USER = os.environ['NMX_USER']
+    NMX_PASS = os.environ['NMX_PASS']
+
+    S1 = os.environ['S1']
+    S2 = os.environ['S2']
+    SERVER = os.environ['SERVER']
 
 
 
@@ -52,6 +64,9 @@ def SSR_get_details(streamId):
     cur = conn.cursor()
     cur.execute(qry)
 
+    from test_nmx import nmx_get_devicesaccess_token
+    ret = nmx_get_devicesaccess_token()
+
     for row in cur:
         o = {}
         o["stream"] = streamId
@@ -64,12 +79,38 @@ def SSR_get_details(streamId):
         o["name"] = row[6]
 
         if row[1] != None :
-            nmxStatus = get_nmx_reference(int(row[1]))
-            o["ServiceId"] =  nmxStatus["ServiceId"]
-            o["Status"] = nmxStatus["Status"]
+
+            nmxStatus = get_nmx_reference(ret, int(row[1]))
+
+            if len(nmxStatus) == 1 : # for PTS
+                o["ServiceId"] = []
+                o["ServiceId"].append(nmxStatus[0]["ServiceId"])
+                o["Status"] = []
+                o["Status"].append(nmxStatus[0]["Status"])
+            else:
+                o["ServiceId"] = []
+                o["ServiceId"].append(nmxStatus[0]["ServiceId"])
+                o["ServiceId"].append(nmxStatus[1]["ServiceId"])
+                o["Status"] = []
+                o["Status"].append(nmxStatus[0]["Status"])
+                o["Status"].append(nmxStatus[1]["Status"])
+
         else :
-            o["ServiceId"] =  ""
-            o["Status"] = ""
+
+            if obj.NMX == obj.NMX2 :
+                o["ServiceId"] = []
+                o["Status"] = []
+                o["ServiceId"].append("")
+                o["Status"].append("")
+            else:
+                o["ServiceId"] = []
+                o["Status"] = []
+                o["ServiceId"].append("")
+                o["ServiceId"].append("")
+                o["Status"].append("")
+                o["Status"].append("")
+
+
 
         if row[2] == row[0] :
             o["Phantom"] = False
@@ -84,26 +125,98 @@ def SSR_get_details(streamId):
 
     return(res)
 
-def get_nmx_reference(si_service_id):
 
-    if os.path.exists('scripts/harmonic_config' + '.json') == True :
 
-        nmx = {}
-        nmx["rezult"] = json.load(open('scripts/harmonic_config' + '.json', 'r'))
 
-        for g in nmx["rezult"]:
-            #print(g)
-            if len(g) > 0 :
-                for s in g:
-                    #print(s)
-                    if s["ServiceNumber"] == si_service_id :
-                        return {"ServiceId": s["ServiceId"], "Status": s["Status"]}
+def get_nmx_reference(ret,si_service_id):
 
-        return {"ServiceId": "", "Status": ""}
-    
+    rezult = []
+
+    if len(ret['rezult']) == 1 :
+
+        if not isinstance(ret['rezult'][0], str) :
+
+            if os.path.exists('scripts/harmonic_config' + '.json') == True :
+
+                nmx = {}
+                nmx["rezult"] = json.load(open('scripts/harmonic_config' + '.json', 'r'))
+
+                for g in nmx["rezult"]:
+                    #print(g)
+                    if len(g) > 0 :
+                        for s in g:
+                            #print(s)
+                            if s["ServiceNumber"] == si_service_id :
+                                rezult.append({"ServiceId": s["ServiceId"], "Status": s["Status"]})
+
+                rezult.append({"ServiceId": "", "Status": ""})
+
+
+            else :
+
+                rezult.append({"ServiceId": "", "Status": ""})
+
+        else :
+
+            rezult.append({"ServiceId": "", "Status": "offline"})
+
     else :
 
-        return {"ServiceId": "", "Status": ""}
+        if not isinstance(ret['rezult'][0], str) :
+
+            if os.path.exists('scripts/harmonic_config_nmx_1' + '.json') == True :
+
+                nmx = {}
+                nmx["rezult"] = json.load(open('scripts/harmonic_config_nmx_1' + '.json', 'r'))
+
+                found = False
+                for g in nmx["rezult"]:
+                    #print(g)
+                    if len(g) > 0 :
+                        for s in g:
+                            #print(s)
+                            if s["ServiceNumber"] == si_service_id :
+                                found = True
+                                rezult.append({"ServiceId": s["ServiceId"], "Status": s["Status"]})
+
+                if found == False :
+                    rezult.append({"ServiceId": "", "Status": ""})
+
+            else :
+
+                rezult.append({"ServiceId": "", "Status": ""})
+        else :
+
+            rezult.append({"ServiceId": "", "Status": "offline"})
+
+        if not isinstance(ret['rezult'][1], str) :
+
+            if os.path.exists('scripts/harmonic_config_nmx_2' + '.json') == True :
+
+                nmx = {}
+                nmx["rezult"] = json.load(open('scripts/harmonic_config_nmx_2' + '.json', 'r'))
+                found = False
+                for g in nmx["rezult"]:
+                    #print(g)
+                    if len(g) > 0 :
+                        for s in g:
+                            #print(s)
+                            if s["ServiceNumber"] == si_service_id :
+                                found = True
+                                rezult.append({"ServiceId": s["ServiceId"], "Status": s["Status"]})
+
+                if found == False :
+                    rezult.append({"ServiceId": "", "Status": ""})
+
+            else :
+
+                rezult.append({"ServiceId": "", "Status": ""})
+        else :
+
+            rezult.append({"ServiceId": "", "Status": "offline"})
+
+    return(rezult)
+
 
 
 
@@ -148,7 +261,7 @@ def SSR_get_streams():
 
     conn.close()
 
-    print(json.dumps(a, indent=4))
+    #print(json.dumps(a, indent=4))
     return(res)
 
 def SSR_current_streams( command, streamId, channelId, state, defaultFlag, ServiceId):
@@ -169,6 +282,7 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
 
     choices = {
         'getconfigured': getScrambledLocalObj_sql_query,
+        'gettservicedetail': getSsrServiceDetailByTsId_sql_query,
         'gettsstreams': getSsrScrambledTransportStream_sql_query,
         'CLEAR': CLRcommand_sql_query,
         'SCRAMBLED': SCRcommand_sql_query,
@@ -181,6 +295,7 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
 
     a = []
     res = {}
+
 
     try:
 
@@ -202,8 +317,12 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
             if command == "SCRAMBLED_ARRAY" :
                 i=0
                 res["data"] = []
+                nmx_response = []
+                ssr_response = []
+                #print(f"channelId : {channelId}")
+                #print(f"ServiceId : {ServiceId}")
                 for x in channelId:
-                    print("\n*** Switch to Default START\n")
+                    #print("\n*** Switch to Default START\n")
                     qry = SCRcommand_sql_query
 
                     if(PLATFORM == "DEV") :
@@ -212,50 +331,62 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                         qry = qry.replace("DEFAULT", "Default")
 
                     qry = qry.replace("?", str(x))
-                    print(qry)
+                    #print(qry)
                     cur.execute(qry)
                     conn.commit()
-                    print("\n*** Switch to Default END\n")
+                    #print("\n*** Switch to Default END\n")
                     ret = f"ssr, switch {x} to Clear ok"
-                    res["data"].append(ret)
-                    if ServiceId[i] != "" :
-                        print("\n*** Switch to NMX Default START\n")
-                        ret = nmx_patch_channel( streamId, ServiceId[i], "Scramble")
-                        print(ret)
-                        print("\n*** Switch to NMX Default END\n")
-                        res["data"].append(ret["rezult"])
+                    ssr_response.append(ret)
+                    s = ServiceId[i]
+
+                    if s != ["",""] and s != [""]:
+                        response = nmx_patch_channel( streamId, s, "Scramble")
+                        nmx_response.append(response)
+                        import time
+                        time.sleep(2.4)
+
                     i += 1
 
-
+                res["data"] = [ssr_response,nmx_response]
 
             elif command == "CLEAR_ARRAY" :
                 i=0
                 res["data"] = []
+                nmx_response = []
+                ssr_response = []
+
+                #print(f"channelId : {channelId}")
+                #print(f"ServiceId : {ServiceId}")
+
                 for x in channelId:
-                    print("\n*** Switch to CLEAR\n")
+                    #print(f"\n*** {x} Switch to CLEAR\n")
                     qry = CLRcommand_sql_query
 
                     if(PLATFORM == "DEV") :
                         qry = qry.upper()
 
                     qry = qry.replace("?", str(x))
-                    print(qry)
+                    #print(qry)
                     cur.execute(qry)
                     conn.commit()
-                    print("\n***Switch to CLEAR END\n")
+                    #print("\n***Switch to CLEAR END\n")
                     ret = f"ssr, switch {x} to Clear ok"
-                    res["data"].append(ret)
-                    if ServiceId[i] != "" :
-                        print("\n*** Switch to NMX CLEAR START\n")
-                        ret = nmx_patch_channel( streamId, ServiceId[i], "Clear")
-                        print(ret)
-                        print("\n*** Switch to NMX CLEAR END\n")
-                        res["data"].append(ret["rezult"])
+                    ssr_response.append(ret)
+                    s = ServiceId[i]
+
+                    if s != ["",""] and s != [""]:
+                        response = nmx_patch_channel( streamId, s, "Clear")
+                        nmx_response.append(response)
+                        import time
+                        time.sleep(2.4)
+
                     i += 1
 
+                res["data"] = [ssr_response,nmx_response]
 
             elif command == "SCRAMBLED" :
 
+                ServiceId = ServiceId[0]
                 qry = SCRcommand_sql_query
                 if(PLATFORM == "DEV") :
                     qry = qry.upper()
@@ -270,13 +401,15 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 res["data"] = []
                 res["data"].append(ret)
 
-                for x in ServiceId:
-                    if x != "" :
-                        ret = nmx_patch_channel( streamId, x, "Scramble")
-                        res["data"].append(ret["rezult"])
+                print(f"ServiceId: {ServiceId}")
+
+                if ServiceId != ["",""] and ServiceId != [""]:  
+                    ret = nmx_patch_channel( streamId, ServiceId, "Scramble")
+                    res["data"].append(ret)
 
             elif command == "CLEAR" :
 
+                ServiceId = ServiceId[0]
                 qry = CLRcommand_sql_query
 
                 if(PLATFORM == "DEV") :
@@ -290,10 +423,12 @@ def SSR_current_streams( command, streamId, channelId, state, defaultFlag, Servi
                 res["data"] = []
                 res["data"].append(ret)
 
-                for x in ServiceId:
-                    if x != "" :
-                        ret = nmx_patch_channel( streamId, x, "Clear")
-                        res["data"].append(ret["rezult"])
+                print(f"ServiceId: {ServiceId}")
+
+                if ServiceId != ["",""] and ServiceId != [""]:  
+                    ret = nmx_patch_channel( streamId, ServiceId, "Clear")
+                    res["data"].append(ret)
+
 
             res["status"] = "ok"
             res["request"] = qry

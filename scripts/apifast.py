@@ -20,9 +20,9 @@ import uvicorn
 from typing import Union
 
 from asp_clearscrambled import *
-from asp_nmx_api import *
+#from asp_nmx_api import *
 
-
+from test_nmx import *
 
 from typing import Optional
 from fastapi_utils.tasks import repeat_every
@@ -44,16 +44,25 @@ app.add_route("/metrics", handle_metrics)
 logger = logging.getLogger(__name__)
 
 count = 0
+onCall = False
 
 @app.on_event("startup")
 @repeat_every(seconds=30, logger=logger, wait_first=False)
 def periodic():
+
     global count
-    nmx_get_harmonic_config()
+    global onCall
+
+    if onCall == False :
+        nmx_get_harmonic_config()
     if count == 0 :
-        nmx_save_copy_harmonic_config()
-    
+        if onCall == False :
+            nmx_save_copy_harmonic_config()
+    else :
+        if onCall == False :
+            nmx_compare_local_and_harmonic_config()
     count += 1
+
 
 @app.on_event("shutdown")
 def shutdown_event():
@@ -94,13 +103,19 @@ def get_service_details(item_id):
 
 @app.post("/platform/manage/picture/scrambled/ssr/api")
 async def request_post(info : Request):
+    global onCall
+    onCall = True
+
     req_info = await info.json()
     if req_info["command"] == "SCRAMBLED" or req_info["command"] == "CLEAR" or req_info["command"] == "SCRAMBLED_ARRAY" or req_info["command"] == "CLEAR_ARRAY" :
         response =  SSR_current_streams( req_info["command"], req_info["stream"], req_info["service"], req_info["state"], req_info["defaultFlag"], req_info["ServiceId"])
+        onCall = False
         return JSONResponse(status_code=200, content=response)
     else :
         response =  SSR_current_streams(req_info["command"],req_info["stream"],None,None)
+        onCall = False
         return JSONResponse(status_code=200, content=response)
+    
 
 ########################          NMX API         ##################################
 
@@ -135,18 +150,19 @@ def get_nmx_realtime_compare_list():
     response = nmx_compare_local_and_harmonic_config()
     return JSONResponse(status_code=200, content=response)
 
+
+
 @app.post("/platform/manage/picture/scrambled/nmx/setClearScramble")
 async def request_post(info : Request):
     req_info = await info.json()
     response =  nmx_patch_channel( req_info["Group"], req_info["ID"], req_info["status"])
     return JSONResponse(status_code=200, content=response)
-            
+
 @app.post("/platform/manage/picture/scrambled/nmx/synchronization")
 async def synchronization_post(info : Request):
     req_info = await info.json()
-    response =  nmx_synchronization( req_info )
+    response =  nmx_synchronization(req_info)
     return JSONResponse(status_code=200, content=response)
-
 
 serverport = int(os.getenv('MYSQL_API_PORT', 9001))
 
