@@ -20,7 +20,7 @@ import uvicorn
 from typing import Union
 
 from asp_clearscrambled import *
-#from asp_nmx_api import *
+from asp_nmx_api import nmx_get_service_lists, nmx_get_service_groups
 
 from test_nmx import *
 
