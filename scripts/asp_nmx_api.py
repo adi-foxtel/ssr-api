@@ -12,28 +12,28 @@ import mysql.connector as mysqlConnector
 
 class InitDataClass:
 
-#    PLATFORM = os.environ['PLATFORM']
-#    NMX = os.environ['NMX']
-#    NMX2 = os.environ['NMX2']
-#    NMX_SITE: os.environ['NMX_SITE']
-#    NMX2_SITE: os.environ['NMX2_SITE']
-#    NMX_USER = os.environ['NMX_USER']
-#    NMX_PASS = os.environ['NMX_PASS']
-#    S1 = os.environ['S1']
-#    S2 = os.environ['S2']
-#    SERVER = os.environ['SERVER']    
+    PLATFORM = os.environ['PLATFORM']
+    NMX = os.environ['NMX']
+    NMX2 = os.environ['NMX2']
+    NMX_SITE: os.environ['NMX_SITE']
+    NMX2_SITE: os.environ['NMX2_SITE']
+    NMX_USER = os.environ['NMX_USER']
+    NMX_PASS = os.environ['NMX_PASS']
+    S1 = os.environ['S1']
+    S2 = os.environ['S2']
+    SERVER = os.environ['SERVER']    
 
-    PLATFORM = "NPD"
-    NMX = "10.243.172.221"
-    NMX2 = "10.243.172.221"
-    NMX_SITE = "PTS"
-    NMX2_SITE = "PTS"
-
-    NMX_USER = "Administrator"
-    NMX_PASS = "harmonic"
-    S1 = "10.197.12.25"
-    S2 = "10.197.12.89"
-    SERVER = "10.197.12.25"    
+#    PLATFORM = "NPD"
+#    NMX = "10.243.172.221"
+#    NMX2 = "10.243.172.221"
+#    NMX_SITE = "PTS"
+#    NMX2_SITE = "PTS"
+#
+#    NMX_USER = "Administrator"
+#    NMX_PASS = "harmonic"
+#    S1 = "10.197.12.25"
+#    S2 = "10.197.12.89"
+#    SERVER = "10.197.12.25"    
 
 
 
